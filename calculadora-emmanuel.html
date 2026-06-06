@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Servicios — Emmanuel Dev</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Instrument+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0b0b0f; --surface: #131318; --surface2: #1a1a22; --surface3: #22222e;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+  --text: #f0eee8; --muted: #7a7890; --muted2: #4a4860;
+  --accent: #6c63ff; --accent2: #9d97ff; --accent-glow: rgba(108,99,255,0.15);
+  --green: #34d399; --green-bg: rgba(52,211,153,0.07); --amber: #fbbf24;
+}
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: 'Instrument Sans', sans-serif; font-size: 15px; line-height: 1.5; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+body::before { content: ''; position: fixed; inset: 0; background-image: radial-gradient(rgba(108,99,255,0.055) 1px, transparent 1px); background-size: 28px 28px; pointer-events: none; z-index: 0; }
+.app { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 44px 20px 80px; }
+
+/* HEADER */
+.header { text-align: center; margin-bottom: 52px; animation: fadeUp 0.6s ease both; }
+.header-badge { display: inline-flex; align-items: center; gap: 7px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent2); background: var(--accent-glow); border: 1px solid rgba(108,99,255,0.25); padding: 6px 14px; border-radius: 100px; margin-bottom: 20px; }
+.header-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s ease infinite; }
+h1 { font-family: 'Syne', sans-serif; font-size: clamp(34px, 6vw, 62px); font-weight: 800; line-height: 1.0; letter-spacing: -0.03em; margin-bottom: 14px; }
+h1 .hl { color: var(--accent2); }
+.header-sub { font-size: 16px; color: var(--muted); max-width: 440px; margin: 0 auto; line-height: 1.6; }
+
+/* PLAN TABS */
+.plan-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 36px; animation: fadeUp 0.6s 0.08s ease both; }
+.plan-tab { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px 22px 20px; cursor: pointer; transition: border-color 0.2s; position: relative; overflow: hidden; text-align: left; }
+.plan-tab::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.2s; }
+.plan-tab.proyecto::before { background: radial-gradient(ellipse at top left, rgba(108,99,255,0.1), transparent 60%); }
+.plan-tab.nomina::before { background: radial-gradient(ellipse at top left, rgba(52,211,153,0.09), transparent 60%); }
+.plan-tab.active { border-color: var(--accent); }
+.plan-tab.active::before { opacity: 1; }
+.plan-tab.active.nomina { border-color: var(--green); }
+.plan-chip { display: inline-flex; align-items: center; gap: 5px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; margin-bottom: 10px; font-weight: 500; }
+.chip-proyecto { background: rgba(108,99,255,0.15); color: var(--accent2); }
+.chip-nomina { background: rgba(52,211,153,0.12); color: var(--green); }
+.chip-popular { display: inline-flex; align-items: center; font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 9px; border-radius: 100px; background: rgba(251,191,36,0.15); color: var(--amber); margin-left: 6px; font-weight: 500; vertical-align: middle; }
+.plan-tab h3 { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 6px; }
+.plan-tab p { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+.plan-price-preview { font-family: 'DM Mono', monospace; font-size: 13px; }
+.plan-price-preview .amt { font-size: 20px; font-weight: 500; color: var(--accent2); }
+.plan-tab.active.nomina .amt { color: var(--green); }
+
+/* CONTENT */
+.content-area { animation: fadeUp 0.4s ease both; }
+.sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.sec-label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.sel-all-btn { font-size: 12px; color: var(--accent2); background: none; border: none; cursor: pointer; font-family: 'Instrument Sans', sans-serif; padding: 0; opacity: 0.8; transition: opacity 0.15s; }
+.sel-all-btn:hover { opacity: 1; }
+
+/* PROYECTO CARDS */
+.cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 28px; }
+.svc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 18px 16px; cursor: pointer; transition: border-color 0.18s, background 0.18s, transform 0.1s; display: flex; flex-direction: column; gap: 10px; position: relative; overflow: hidden; user-select: none; }
+.svc-card:active { transform: scale(0.98); }
+.svc-card.selected { border-color: var(--accent); background: var(--surface2); }
+.svc-card.selected::after { content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: radial-gradient(circle, rgba(108,99,255,0.08), transparent 70%); border-radius: 50%; transform: translate(30%, -30%); }
+.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.card-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--surface3); display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; transition: background 0.2s; }
+.svc-card.selected .card-icon { background: rgba(108,99,255,0.15); }
+.card-check { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--border2); background: var(--surface3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s, border-color 0.15s; }
+.card-check svg { opacity: 0; transform: scale(0.5); transition: opacity 0.15s, transform 0.15s; }
+.svc-card.selected .card-check { background: var(--accent); border-color: var(--accent); }
+.svc-card.selected .card-check svg { opacity: 1; transform: scale(1); }
+.card-name { font-family: 'Syne', sans-serif; font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; line-height: 1.3; }
+.card-detail { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+.card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid var(--border); }
+.card-price { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; }
+.card-tag { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--muted2); letter-spacing: 0.06em; }
+
+/* NÓMINA HERO */
+.nomina-hero { background: var(--green-bg); border: 1px solid rgba(52,211,153,0.16); border-radius: 20px; padding: 32px 28px 26px; margin-bottom: 24px; position: relative; overflow: hidden; }
+.nomina-hero::after { content: ''; position: absolute; top: -80px; right: -80px; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, rgba(52,211,153,0.09), transparent 70%); }
+.nomina-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 22px; position: relative; z-index: 1; }
+.nomina-hero-text h2 { font-family: 'Syne', sans-serif; font-size: clamp(20px, 4vw, 28px); font-weight: 800; letter-spacing: -0.02em; color: var(--text); margin-bottom: 10px; line-height: 1.15; }
+.nomina-hero-text h2 span { color: var(--green); }
+.nomina-hero-text p { font-size: 13px; color: var(--muted); line-height: 1.65; max-width: 400px; }
+.nomina-price-box { text-align: right; flex-shrink: 0; }
+.nomina-price-was { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted2); text-decoration: line-through; margin-bottom: 4px; }
+.nomina-price-big { font-family: 'Syne', sans-serif; font-size: clamp(30px, 5vw, 42px); font-weight: 800; letter-spacing: -0.03em; color: var(--green); line-height: 1; }
+.nomina-price-period { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.nomina-bullets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; position: relative; z-index: 1; }
+.nomina-bullet { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text); }
+.nomina-bullet .ico { width: 22px; height: 22px; border-radius: 6px; background: rgba(52,211,153,0.13); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.nomina-cta-note { font-size: 11.5px; color: var(--muted2); border-top: 1px solid rgba(52,211,153,0.12); padding-top: 16px; line-height: 1.6; position: relative; z-index: 1; }
+
+/* NÓMINA SERVICES TACHADOS */
+.nomina-list-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted2); margin-bottom: 12px; display: block; }
+.nomina-services-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 28px; }
+.nomina-svc-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 11px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.nomina-svc-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+.nomina-svc-icon { font-size: 14px; flex-shrink: 0; opacity: 0.55; }
+.nomina-svc-name { font-size: 12px; color: var(--muted2); text-decoration: line-through; text-decoration-color: rgba(122,120,144,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nomina-svc-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.nomina-svc-price { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted2); text-decoration: line-through; text-decoration-color: rgba(74,72,96,0.7); white-space: nowrap; }
+.inc-badge { width: 18px; height: 18px; border-radius: 5px; background: rgba(52,211,153,0.14); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* SUMMARY */
+.summary { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; margin-top: 8px; }
+.summary-inner { padding: 24px 24px 0; }
+.summary-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+.summary-lines { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.sum-line { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.sum-line .val { color: var(--text); font-weight: 500; }
+.sum-divider { height: 1px; background: var(--border); margin: 4px 0 16px; }
+.sum-total { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 24px; }
+.sum-total .label { font-size: 15px; font-weight: 600; }
+.sum-total .total-val { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: -0.02em; color: var(--accent2); transition: color 0.2s; }
+.nomina-active .sum-total .total-val { color: var(--green); }
+.sum-period { font-size: 12px; color: var(--muted); margin-left: 4px; font-weight: 400; font-family: 'Instrument Sans', sans-serif; }
+.selected-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 24px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding-bottom 0.3s; }
+.selected-chips.has-items { max-height: 120px; padding-bottom: 16px; }
+.sel-chip { font-family: 'DM Mono', monospace; font-size: 10px; padding: 4px 10px; border-radius: 100px; background: rgba(108,99,255,0.12); color: var(--accent2); border: 1px solid rgba(108,99,255,0.2); white-space: nowrap; }
+.cta-area { padding: 0 24px 24px; }
+.cta-btn { width: 100%; padding: 15px; background: var(--accent); color: white; border: none; border-radius: 12px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; cursor: pointer; transition: background 0.15s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.cta-btn:hover { background: #5a52e0; }
+.cta-btn:active { transform: scale(0.98); }
+.nomina-active .cta-btn { background: #22c079; }
+.nomina-active .cta-btn:hover { background: #1ba86a; }
+.cta-note { text-align: center; font-size: 11.5px; color: var(--muted2); margin-top: 10px; }
+.hidden { display: none !important; }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+@media (max-width: 640px) {
+  .app { padding: 28px 14px 60px; }
+  h1 { font-size: 34px; }
+  .plan-switcher, .cards-grid, .nomina-services-grid, .nomina-bullets { grid-template-columns: 1fr; }
+  .plan-tab { padding: 18px 16px; }
+  .nomina-hero { padding: 22px 18px 20px; }
+  .nomina-hero-top { flex-direction: column; gap: 14px; }
+  .nomina-price-box { text-align: left; }
+  .summary-inner { padding: 20px 18px 0; }
+  .cta-area { padding: 0 18px 20px; }
+  .selected-chips { padding-left: 18px; padding-right: 18px; }
+  .sum-total .total-val { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="header-badge">
+      <span class="dot"></span>
+      Emmanuel · Desarrollador Web Freelance
+    </div>
+    <div style="margin-bottom:10px;">
+      <span style="font-family:'Syne',sans-serif;font-size:clamp(38px,7vw,80px);font-weight:800;letter-spacing:-0.03em;color:var(--green);line-height:1;display:block;">Laura Gallego</span>
+    </div>
+    <h1 style="margin-bottom:14px;">Tu inversión<br><span class="hl">digital</span></h1>
+    <p class="header-sub">Dos formas de trabajar juntos. Sin pagos por adelantado, sin sorpresas.</p>
+  </header>
+
+  <div class="plan-switcher">
+    <div class="plan-tab proyecto active" id="tab-proyecto" onclick="selectPlan('proyecto')">
+      <div class="plan-chip chip-proyecto">&#9632; Proyecto único</div>
+      <h3>Ecosistema digital completo</h3>
+      <p>Tienda online, membresías, panel admin y sitio web. Entregado primero, pagás después.</p>
+      <div class="plan-price-preview">
+        <span class="amt" id="prev-proyecto">$4.800.000</span>
+        <span style="color:var(--muted);font-size:12px;"> pago único</span>
+      </div>
+    </div>
+    <div class="plan-tab nomina" id="tab-nomina" onclick="selectPlan('nomina')">
+      <div>
+        <div class="plan-chip chip-nomina" style="margin-bottom:0;">&#9632; Nómina mensual</div>
+        <span class="chip-popular">&#9733; Recomendado</span>
+      </div>
+      <h3 style="margin-top:10px;">Emmanuel en tu equipo</h3>
+      <p>Todo incluido. Un desarrollador dedicado a que tu negocio digital crezca cada mes.</p>
+      <div class="plan-price-preview">
+        <span class="amt" style="color:var(--green);">$1.200.000</span>
+        <span style="color:var(--muted);font-size:12px;"> / mes</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-area" id="content-area">
+
+    <!-- PROYECTO -->
+    <div id="plan-proyecto">
+      <div class="sec-header">
+        <span class="sec-label">Módulos del proyecto</span>
+        <button class="sel-all-btn" onclick="toggleAllProyecto()">Seleccionar todo</button>
+      </div>
+      <div class="cards-grid" id="grid-proyecto"></div>
+    </div>
+
+    <!-- NÓMINA -->
+    <div id="plan-nomina" class="hidden">
+      <div class="nomina-hero">
+        <div class="nomina-hero-top">
+          <div class="nomina-hero-text">
+            <h2>Tu negocio digital,<br><span>gestionado por completo.</span></h2>
+            <p>Incluye <strong style="color:var(--text);">todo el Ecosistema Digital</strong> — tienda, membresías, panel admin, portal de clientes y sitio web — más la gestión mensual completa: mantenimiento, SEO, automatizaciones, seguridad, email marketing y más. Emmanuel lo maneja todo, como parte de tu equipo, sin los costos de un empleado formal.</p>
+          </div>
+          <div class="nomina-price-box">
+            <div class="nomina-price-was">Por separado: ~$10.600.000</div>
+            <div class="nomina-price-big">$1.200.000</div>
+            <div class="nomina-price-period">/ mes · todo incluido</div>
+          </div>
+        </div>
+        <div class="nomina-bullets">
+          <div class="nomina-bullet"><div class="ico">🌐</div>Sitio web institucional</div>
+          <div class="nomina-bullet"><div class="ico">🛍️</div>Tienda e-commerce</div>
+          <div class="nomina-bullet"><div class="ico">🎿</div>Sistema de membresías</div>
+          <div class="nomina-bullet"><div class="ico">⚙️</div>Panel de administración</div>
+          <div class="nomina-bullet"><div class="ico">👤</div>Portal de clientes</div>
+          <div class="nomina-bullet"><div class="ico">🎓</div>Capacitación + soporte inicial</div>
+          <div class="nomina-bullet" style="grid-column:1/-1;border-top:1px solid rgba(52,211,153,0.12);padding-top:10px;margin-top:2px;color:var(--muted);font-size:11.5px;letter-spacing:0.08em;font-family:'DM Mono',monospace;text-transform:uppercase;">+ Gestión mensual continua</div>
+          <div class="nomina-bullet"><div class="ico">🔧</div>Mantenimiento y soporte</div>
+          <div class="nomina-bullet"><div class="ico">📈</div>SEO y visibilidad en Google</div>
+          <div class="nomina-bullet"><div class="ico">⚡</div>Automatizaciones inteligentes</div>
+          <div class="nomina-bullet"><div class="ico">📊</div>Analítica y reportes</div>
+          <div class="nomina-bullet"><div class="ico">🔒</div>Seguridad y backups</div>
+          <div class="nomina-bullet"><div class="ico">🎨</div>Mejoras de diseño y UX</div>
+          <div class="nomina-bullet"><div class="ico">📧</div>Email marketing</div>
+          <div class="nomina-bullet"><div class="ico">🤖</div>Chatbot y atención digital</div>
+        </div>
+        <div class="nomina-cta-note">
+          ✦ Sin prestaciones ni contrato laboral &nbsp;·&nbsp; Sin licencias ni equipos extra &nbsp;·&nbsp; Cancelás cuando quieras &nbsp;·&nbsp; Respuesta directa por WhatsApp
+        </div>
+      </div>
+
+      <span class="nomina-list-label">Ecosistema digital incluido + servicios mensuales — lo que costaría por separado</span>
+      <div class="nomina-services-grid" id="nomina-services-grid"></div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="summary" id="summary">
+      <div class="summary-inner">
+        <div class="summary-title">Resumen</div>
+        <div class="summary-lines" id="summary-lines"></div>
+        <div class="sum-divider"></div>
+        <div class="sum-total">
+          <span class="label">Total</span>
+          <span>
+            <span class="total-val" id="total-val">$4.800.000</span>
+            <span class="sum-period" id="total-period">pago único</span>
+          </span>
+        </div>
+      </div>
+      <div class="selected-chips" id="selected-chips"></div>
+      <div class="cta-area">
+        <button class="cta-btn" onclick="requestQuote()">
+          Solicitar propuesta
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+        <p class="cta-note" id="cta-note">Sin cobro por adelantado · Aprobás primero, pagás después</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const proyectoData = [
+  { id:'sitio',        icon:'🌐', name:'Sitio web institucional',     detail:'Landing, sobre el club, horarios, galería y contacto',             price:800000,  tag:'Semana 1' },
+  { id:'ecommerce',    icon:'🛍️', name:'Tienda e-commerce',           detail:'Catálogo, carrito, checkout y pasarela de pago integrada',          price:1200000, tag:'Semana 2' },
+  { id:'membresias',   icon:'🎿', name:'Sistema de membresías',       detail:'Planes, cobro recurrente y portal del miembro del club',             price:1000000, tag:'Semana 3' },
+  { id:'admin',        icon:'⚙️', name:'Panel de administración',     detail:'Control total del negocio desde un solo lugar sin técnicos',         price:900000,  tag:'Semana 4' },
+  { id:'clientes',     icon:'👤', name:'Portal de clientes',          detail:'Mi cuenta, historial de compras, membresías activas y facturas',     price:500000,  tag:'Semana 3' },
+  { id:'capacitacion', icon:'🎓', name:'Capacitación + soporte',      detail:'Sesión de uso, documentación y 30 días de soporte post-lanzamiento', price:400000,  tag:'Semana 5' },
+];
+
+const nominaData = [
+  { icon:'🌐', name:'Sitio web institucional',    price:800000  },
+  { icon:'🛍️', name:'Tienda e-commerce',          price:1200000 },
+  { icon:'🎿', name:'Sistema de membresías',      price:1000000 },
+  { icon:'⚙️', name:'Panel de administración',   price:900000  },
+  { icon:'👤', name:'Portal de clientes',         price:500000  },
+  { icon:'🎓', name:'Capacitación + soporte',     price:400000  },
+  { icon:'🔧', name:'Mantenimiento web',           price:350000  },
+  { icon:'📈', name:'SEO y posicionamiento',       price:600000  },
+  { icon:'📧', name:'Email marketing',             price:400000  },
+  { icon:'📊', name:'Analítica y reportes',        price:350000  },
+  { icon:'🛠️', name:'Soporte técnico continuo',   price:500000  },
+  { icon:'✏️', name:'Contenido web',               price:450000  },
+  { icon:'⚡', name:'Automatizaciones',            price:550000  },
+  { icon:'📦', name:'Operaciones de tienda',       price:300000  },
+  { icon:'☁️', name:'Hosting y dominio',           price:200000  },
+  { icon:'🔒', name:'Seguridad web',               price:400000  },
+  { icon:'🎨', name:'UX y optimización visual',    price:600000  },
+  { icon:'🔗', name:'Integraciones y APIs',        price:500000  },
+  { icon:'🤖', name:'Chatbot y atención digital',  price:650000  },
+];
+
+const proyectoState = {};
+proyectoData.forEach(s => proyectoState[s.id] = true);
+let activePlan = 'proyecto';
+
+function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CO'); }
+
+function buildProyectoCard(item) {
+  const sel = proyectoState[item.id];
+  return '<div class="svc-card ' + (sel ? 'selected' : '') + '" onclick="toggleProyecto(\'' + item.id + '\')">' +
+    '<div class="card-top"><div class="card-icon">' + item.icon + '</div>' +
+    '<div class="card-check"><svg width="11" height="9" viewBox="0 0 11 9" fill="none"><path d="M1 4.5L4 7.5L10 1" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>' +
+    '<div><div class="card-name">' + item.name + '</div><div class="card-detail">' + item.detail + '</div></div>' +
+    '<div class="card-footer"><div class="card-price">' + fmt(item.price) + '</div><div class="card-tag">' + item.tag + '</div></div>' +
+    '</div>';
+}
+
+function buildNominaRow(item) {
+  return '<div class="nomina-svc-row">' +
+    '<div class="nomina-svc-left"><span class="nomina-svc-icon">' + item.icon + '</span><span class="nomina-svc-name">' + item.name + '</span></div>' +
+    '<div class="nomina-svc-right"><span class="nomina-svc-price">' + fmt(item.price) + '</span>' +
+    '<div class="inc-badge"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#34d399" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
+    '</div></div>';
+}
+
+function renderProyecto() {
+  document.getElementById('grid-proyecto').innerHTML = proyectoData.map(buildProyectoCard).join('');
+}
+
+function renderNomina() {
+  document.getElementById('nomina-services-grid').innerHTML = nominaData.map(buildNominaRow).join('');
+}
+
+function toggleProyecto(id) {
+  proyectoState[id] = !proyectoState[id];
+  renderProyecto();
+  updateSummary();
+}
+
+function toggleAllProyecto() {
+  var anyOff = proyectoData.some(function(s){ return !proyectoState[s.id]; });
+  proyectoData.forEach(function(s){ proyectoState[s.id] = anyOff; });
+  renderProyecto();
+  updateSummary();
+}
+
+function selectPlan(plan) {
+  activePlan = plan;
+  document.getElementById('tab-proyecto').className = 'plan-tab proyecto' + (plan === 'proyecto' ? ' active' : '');
+  document.getElementById('tab-nomina').className   = 'plan-tab nomina'   + (plan === 'nomina'   ? ' active' : '');
+  document.getElementById('plan-proyecto').className = plan === 'proyecto' ? '' : 'hidden';
+  document.getElementById('plan-nomina').className   = plan === 'nomina'   ? '' : 'hidden';
+  var summary = document.getElementById('summary');
+  var contentArea = document.getElementById('content-area');
+  var ctaNote = document.getElementById('cta-note');
+  if (plan === 'nomina') {
+    summary.classList.add('nomina-active');
+    contentArea.classList.add('nomina-active');
+    ctaNote.textContent = 'Todo incluido · Sin costo de empleado · Cancelás cuando quieras';
+  } else {
+    summary.classList.remove('nomina-active');
+    contentArea.classList.remove('nomina-active');
+    ctaNote.textContent = 'Sin cobro por adelantado · Aprobás primero, pagás después';
+  }
+  updateSummary();
+}
+
+function updateSummary() {
+  var isProyecto = activePlan === 'proyecto';
+  var linesEl = document.getElementById('summary-lines');
+  var chipsEl = document.getElementById('selected-chips');
+
+  if (isProyecto) {
+    var selected = proyectoData.filter(function(s){ return proyectoState[s.id]; });
+    var total = selected.reduce(function(a, s){ return a + s.price; }, 0);
+    document.getElementById('prev-proyecto').textContent = fmt(total);
+    document.getElementById('total-val').textContent = fmt(total);
+    document.getElementById('total-period').textContent = 'pago único';
+    if (selected.length === 0) {
+      linesEl.innerHTML = '<div class="sum-line" style="color:var(--muted2);">Ningún módulo seleccionado</div>';
+    } else {
+      linesEl.innerHTML = selected.map(function(s){ return '<div class="sum-line"><span>' + s.name + '</span><span class="val">' + fmt(s.price) + '</span></div>'; }).join('');
+    }
+    if (selected.length > 0) {
+      chipsEl.className = 'selected-chips has-items';
+      chipsEl.innerHTML = selected.map(function(s){ return '<span class="sel-chip">' + s.icon + ' ' + s.name + '</span>'; }).join('');
+    } else {
+      chipsEl.className = 'selected-chips';
+      chipsEl.innerHTML = '';
+    }
+  } else {
+    var totalSeparado = nominaData.reduce(function(a, s){ return a + s.price; }, 0);
+    document.getElementById('total-val').textContent = '$1.200.000';
+    document.getElementById('total-period').textContent = '/ mes';
+    linesEl.innerHTML =
+      '<div class="sum-line"><span>' + nominaData.length + ' servicios incluidos</span><span class="val" style="color:var(--muted);text-decoration:line-through;">' + fmt(totalSeparado) + '</span></div>' +
+      '<div class="sum-line"><span>Ahorro mensual</span><span class="val" style="color:var(--green);">' + fmt(totalSeparado - 1200000) + '</span></div>';
+    chipsEl.className = 'selected-chips';
+    chipsEl.innerHTML = '';
+  }
+}
+
+function requestQuote() {
+  var phone = '573016315482';
+  var msg = '';
+  if (activePlan === 'proyecto') {
+    var selected = proyectoData.filter(function(s){ return proyectoState[s.id]; });
+    var total = selected.reduce(function(a, s){ return a + s.price; }, 0);
+    var lista = selected.map(function(s){ return s.name + ' (' + fmt(s.price) + ')'; }).join(', ');
+    msg = 'Ey Emmanuel! \uD83D\uDE0A Revis\u00E9 la calculadora y me qued\u00E9 con: ' + lista + '. El total me sale en ' + fmt(total) + '. \u00BFArrancamos?';
+  } else {
+    msg = 'Ey Emmanuel! \uD83D\uDE0A Revis\u00E9 todo y prefiero el plan mensual \u2014 as\u00ED tengo todo cubierto desde el inicio. \u00BFCu\u00E1ndo arrancamos?';
+  }
+  window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+renderProyecto();
+renderNomina();
+updateSummary();
+</script>
+</body>
+</html>
